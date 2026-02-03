@@ -45,9 +45,7 @@ class LedgerQuery
         $q = DB::table('customers as c')
             ->leftJoin('transactions as t', function ($join) {
                 $join->on('t.customer_id', '=', 'c.customer_id');
-                $join->whereNull('t.deleted_at');
-            })
-            ->whereNull('c.deleted_at');
+            });
 
         if ($this->filters['from'] ?? null) {
             $q->whereDate('t.transaction_date', '>=', $this->filters['from']);
@@ -86,14 +84,14 @@ class LedgerQuery
             DB::raw('COALESCE(MAX(t.transaction_date), c.created_at) as last_txn_date'),
             DB::raw("c.opening_balance + COALESCE(SUM(CASE WHEN t.transaction_type = 'credit' THEN t.amount END),0) - COALESCE(SUM(CASE WHEN t.transaction_type = 'debit' THEN t.amount END),0) as final_balance"),
         ])->groupBy(
-            'c.customer_id',
-            'c.customer_name',
-            'c.mobile_number',
-            'c.email',
-            'c.address',
-            'c.opening_balance',
-            'c.created_at'
-        );
+                'c.customer_id',
+                'c.customer_name',
+                'c.mobile_number',
+                'c.email',
+                'c.address',
+                'c.opening_balance',
+                'c.created_at'
+            );
 
         $sortKey = $this->filters['sort'] ?? 'final_balance';
         $dir = strtolower($this->filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';

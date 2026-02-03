@@ -13,13 +13,16 @@ use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Services\LedgerQuery;
 use App\Services\ActivityLogger;
+use App\Exports\SampleCustomersExport;
+use App\Exports\SampleTransactionsExport;
+use App\Exports\MasterLogExport;
 
 class CalculationController extends Controller
 {
     public function index(Request $request)
     {
         $ledger = LedgerQuery::fromRequest($request);
-        $customers = $ledger->paginate(10);
+        $customers = $ledger->paginate(20);
         $kpis = $ledger->kpis();
 
         return view('calculation.index', [
@@ -28,6 +31,151 @@ class CalculationController extends Controller
             'grandTotalDebit' => $kpis['grandTotalDebit'],
             'grandFinalBalance' => $kpis['grandFinalBalance'],
         ]);
+    }
+
+    public function masterLog(Request $request)
+    {
+        $date = $request->input('date', now()->toDateString());
+        $search = $request->input('search');
+        $type = $request->input('type');
+
+        $query = Transaction::with('customer')
+            ->whereDate('transaction_date', $date);
+
+        if ($type && in_array($type, ['credit', 'debit'])) {
+            $query->where('transaction_type', $type);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('amount', 'like', "%{$search}%")
+                    ->orWhere('remarks', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($cq) use ($search) {
+                        $cq->where('customer_name', 'like', "%{$search}%")
+                            ->orWhere('customer_id', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Calculate totals for the FULL DAY before pagination
+        $totalQuery = clone $query;
+        $dailyCredit = (clone $totalQuery)->where('transaction_type', 'credit')->sum('amount');
+        $dailyDebit = (clone $totalQuery)->where('transaction_type', 'debit')->sum('amount');
+
+        $transactions = $query->orderBy('created_at', 'asc')->paginate(10)->withQueryString();
+
+        return view('calculation.master_log', [
+            'transactions' => $transactions,
+            'date' => $date,
+            'search' => $search,
+            'type' => $type,
+            'dailyCredit' => $dailyCredit,
+            'dailyDebit' => $dailyDebit,
+            'dailyNet' => $dailyCredit - $dailyDebit
+        ]);
+    }
+
+    public function exportMasterLog(Request $request)
+    {
+        $date = $request->input('date', now()->toDateString());
+        $search = $request->input('search');
+        $type = $request->input('type');
+
+        $query = Transaction::with('customer')
+            ->whereDate('transaction_date', $date);
+
+        if ($type && in_array($type, ['credit', 'debit'])) {
+            $query->where('transaction_type', $type);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('amount', 'like', "%{$search}%")
+                    ->orWhere('remarks', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($cq) use ($search) {
+                        $cq->where('customer_name', 'like', "%{$search}%")
+                            ->orWhere('customer_id', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $transactions = $query->orderBy('created_at', 'asc')->get();
+
+        return Excel::download(new MasterLogExport($transactions, $date), "Daily_Passbook_{$date}.xlsx");
+    }
+
+    public function ledger(Request $request, $customerId)
+    {
+        $customer = Customer::where('customer_id', $customerId)->firstOrFail();
+
+        $from = $request->input('from');
+        $to = $request->input('to', now()->toDateString());
+
+        $data = $this->getLedgerData($customer, $from, $to);
+
+        return view('calculation.ledger', array_merge($data, [
+            'customer' => $customer,
+            'filters' => [
+                'from' => $from,
+                'to' => $to,
+            ]
+        ]));
+    }
+
+    public function exportStatement(Request $request, $customerId)
+    {
+        $customer = Customer::where('customer_id', $customerId)->firstOrFail();
+
+        $from = $request->input('from');
+        $to = $request->input('to', now()->toDateString());
+
+        $data = $this->getLedgerData($customer, $from, $to);
+
+        ActivityLogger::log('export', 'statement_excel', ['customer_id' => $customerId, 'from' => $from, 'to' => $to]);
+
+        return Excel::download(
+            new \App\Exports\StatementOfAccountExport($customer, $data['transactions'], $data['openingBalance'], ['from' => $from, 'to' => $to]),
+            "Statement_{$customerId}.xlsx"
+        );
+    }
+
+    private function getLedgerData($customer, $from, $to)
+    {
+        $customerId = $customer->customer_id;
+        $baseOpening = (float) $customer->opening_balance;
+
+        $previousCredits = 0;
+        $previousDebits = 0;
+
+        if ($from) {
+            $previousCredits = Transaction::where('customer_id', $customerId)
+                ->where('transaction_date', '<', $from)
+                ->where('transaction_type', 'credit')
+                ->sum('amount');
+
+            $previousDebits = Transaction::where('customer_id', $customerId)
+                ->where('transaction_date', '<', $from)
+                ->where('transaction_type', 'debit')
+                ->sum('amount');
+        }
+
+        $dynamicOpening = $baseOpening + $previousCredits - $previousDebits;
+
+        $query = Transaction::where('customer_id', $customerId)
+            ->orderBy('transaction_date', 'asc')
+            ->orderBy('created_at', 'asc');
+
+        if ($from) {
+            $query->where('transaction_date', '>=', $from);
+        }
+        if ($to) {
+            $query->where('transaction_date', '<=', $to);
+        }
+
+        return [
+            'transactions' => $query->get(),
+            'openingBalance' => $dynamicOpening,
+        ];
     }
 
     public function uploadCustomers(Request $request)
@@ -254,6 +402,34 @@ class CalculationController extends Controller
         ActivityLogger::log('delete', $customerId, ['cascade' => true]);
 
         return back()->with('success', 'Customer deleted.');
+    }
+
+    public function bulkDeleteCustomers(Request $request)
+    {
+        $customerIds = $request->input('customer_ids', []);
+
+        if (empty($customerIds)) {
+            return back()->with('error', 'No customers selected for deletion.');
+        }
+
+        DB::transaction(function () use ($customerIds) {
+            Transaction::whereIn('customer_id', $customerIds)->delete();
+            Customer::whereIn('customer_id', $customerIds)->delete();
+        });
+
+        ActivityLogger::log('bulk_delete', count($customerIds) . ' customers', ['ids' => $customerIds]);
+
+        return back()->with('success', count($customerIds) . ' customers deleted successfully.');
+    }
+
+    public function downloadSampleCustomers()
+    {
+        return Excel::download(new SampleCustomersExport, 'sample_customers.xlsx');
+    }
+
+    public function downloadSampleTransactions()
+    {
+        return Excel::download(new SampleTransactionsExport, 'sample_transactions.xlsx');
     }
 
     private function normalizeRowKeys(array $row): array
