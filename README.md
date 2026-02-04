@@ -1,59 +1,265 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Bank/Exchange Reconciliation System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Overview
+A professional daily bank and exchange reconciliation system that tracks deposits, withdrawals, settlements, and closing balances to ensure accurate financial reconciliation.
 
-## About Laravel
+## Core Concept
+This system is designed to match real-world Excel-based daily operational control sheets used for bank/exchange reconciliation. It is **NOT** a customer ledger or accounting system.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Key Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1. **Multi-Bank Management**
+- Track multiple banks, exchanges, and wallets
+- Auto-create banks during Excel imports
+- Support for different account types
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 2. **Transaction Types**
+- **Deposits (Pay IN)**: Money received into bank accounts
+- **Withdrawals (Pay OUT)**: Money paid out from bank accounts
+- **Settlements**: Inter-bank transfers
+- **Bank Closings**: Actual closing balances from bank statements
 
-## Learning Laravel
+### 3. **Reconciliation Logic**
+```
+System Balance = 
+    Total Deposits 
+    - Total Completed Withdrawals
+    - Settlements OUT
+    + Settlements IN
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Difference = Actual Closing - System Balance
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Pending Amount = Sum of Pending Withdrawals
+```
 
-## Laravel Sponsors
+### 4. **Excel Import/Export**
+- Bulk upload via Excel files
+- Strict validation and error handling
+- Transaction rollback on failures
+- Sample templates available for download
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 5. **Advanced Filtering**
+- Date range filtering
+- Bank-specific filtering
+- Amount range filtering
+- Status filtering (for withdrawals)
+- All filters apply to both UI and exports
 
-### Premium Partners
+## Database Schema
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Banks Table
+- `id` - Primary key
+- `name` - Unique bank name
+- `type` - bank/exchange/wallet
+- `created_at`, `updated_at`, `deleted_at`
 
-## Contributing
+### Deposits Table
+- `id` - Primary key
+- `date` - Transaction date
+- `bank_id` - Foreign key to banks
+- `amount` - Deposit amount
+- `utr` - Unique Transaction Reference
+- `source_name` - Source ID/exchange name
+- `remark` - Optional notes
+- Unique constraint: (bank_id, date, utr)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Withdrawals Table
+- `id` - Primary key
+- `date` - Transaction date
+- `bank_id` - Foreign key to banks
+- `amount` - Withdrawal amount
+- `utr` - Unique Transaction Reference
+- `source_name` - Destination name
+- `status` - pending/completed
+- `remark` - Optional notes
+- Unique constraint: (bank_id, date, utr)
 
-## Code of Conduct
+### Settlements Table
+- `id` - Primary key
+- `date` - Transaction date
+- `from_bank_id` - Source bank
+- `to_bank_id` - Destination bank
+- `amount` - Transfer amount
+- `utr` - Unique Transaction Reference
+- `remark` - Optional notes
+- Unique constraint: (date, utr)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Bank Closings Table
+- `id` - Primary key
+- `date` - Closing date
+- `bank_id` - Foreign key to banks
+- `actual_closing` - Actual closing balance from bank
+- Unique constraint: (date, bank_id)
 
-## Security Vulnerabilities
+## Excel File Formats
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Deposits Template
+| bank_name | bank_type | date | amount | utr | source_name | remark |
+|-----------|-----------|------|--------|-----|-------------|--------|
+| HDFC Bank | bank | 2026-02-01 | 50000.00 | UTR123 | Customer A | Payment received |
+
+### Withdrawals Template
+| bank_name | bank_type | date | amount | utr | source_name | status | remark |
+|-----------|-----------|------|--------|-----|-------------|--------|--------|
+| HDFC Bank | bank | 2026-02-01 | 30000.00 | UTR456 | Vendor X | completed | Payment made |
+
+### Settlements Template
+| date | from_bank | to_bank | amount | utr | remark |
+|------|-----------|---------|--------|-----|--------|
+| 2026-02-01 | HDFC Bank | ICICI Bank | 100000.00 | UTR789 | Inter-bank transfer |
+
+## User Guide
+
+### Main Dashboard
+1. Navigate to the home page
+2. Use filters to select date range and/or specific bank
+3. View reconciliation summary showing:
+   - Pay IN (deposits)
+   - Pay OUT (completed withdrawals)
+   - Net Settlements
+   - System Balance
+   - Actual Closing
+   - Difference
+   - Pending Withdrawals
+4. Export filtered data to Excel
+
+### Managing Deposits
+1. Go to **Deposits** page
+2. Download sample template if needed
+3. Upload Excel file with deposit data
+4. View, filter, and export deposits
+
+### Managing Withdrawals
+1. Go to **Withdrawals** page
+2. Download sample template if needed
+3. Upload Excel file with withdrawal data
+4. Filter by status (pending/completed)
+5. View, filter, and export withdrawals
+
+### Managing Settlements
+1. Go to **Settlements** page
+2. Download sample template if needed
+3. Upload Excel file with settlement data
+4. Filter by source or destination bank
+5. View, filter, and export settlements
+
+### Recording Bank Closings
+1. Go to **Closings** page
+2. Enter bank, date, and actual closing balance
+3. Click "Save Closing"
+4. View history of all closing balances
+
+## Technical Details
+
+### Performance Optimizations
+- All calculations performed at database level (SQL)
+- No PHP-side aggregation
+- Pagination on all list views (50 items per page)
+- Indexed foreign keys and date columns
+- Query optimization for large datasets
+
+### Error Handling
+- Database transactions for all imports
+- Automatic rollback on validation failures
+- Duplicate UTR detection
+- Comprehensive validation rules
+- User-friendly error messages
+
+### Security Features
+- Soft deletes on all tables
+- No hard deletes allowed
+- Unique constraints prevent duplicates
+- File upload validation (type and size)
+- SQL injection protection via Eloquent ORM
+
+## API Endpoints
+
+### Pages
+- `GET /` - Main reconciliation dashboard
+- `GET /deposits` - Deposits management
+- `GET /withdrawals` - Withdrawals management
+- `GET /settlements` - Settlements management
+- `GET /closings` - Bank closings management
+
+### Uploads
+- `POST /deposits/upload` - Upload deposits Excel
+- `POST /withdrawals/upload` - Upload withdrawals Excel
+- `POST /settlements/upload` - Upload settlements Excel
+- `POST /closings/update` - Update closing balance
+
+### Exports
+- `GET /export/reconciliation` - Export reconciliation data
+- `GET /export/deposits` - Export filtered deposits
+- `GET /export/withdrawals` - Export filtered withdrawals
+- `GET /export/settlements` - Export filtered settlements
+
+### Sample Downloads
+- `GET /samples/deposits` - Download deposits template
+- `GET /samples/withdrawals` - Download withdrawals template
+- `GET /samples/settlements` - Download settlements template
+
+## Installation
+
+1. **Clone Repository**
+   ```bash
+   git clone <repository-url>
+   cd calculation
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   composer install
+   npm install
+   ```
+
+3. **Environment Setup**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+4. **Database Setup**
+   ```bash
+   php artisan migrate:fresh
+   ```
+
+5. **Start Development Server**
+   ```bash
+   php artisan serve
+   ```
+
+6. **Access Application**
+   Open browser to `http://localhost:8000`
+
+## Maintenance
+
+### Backup Database
+```bash
+php artisan db:backup
+```
+
+### Clear Cache
+```bash
+php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+```
+
+### View Logs
+```bash
+tail -f storage/logs/laravel.log
+```
+
+## Support
+
+For issues or questions, please contact the development team or create an issue in the repository.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Proprietary - All rights reserved
+
+---
+
+**Version**: 2.0.0  
+**Last Updated**: February 4, 2026  
+**System Type**: Bank/Exchange Reconciliation System
