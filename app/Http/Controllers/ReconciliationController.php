@@ -65,7 +65,7 @@ class ReconciliationController extends Controller
             'max_amount' => $request->input('max_amount'),
         ];
 
-        $deposits = $this->reconciliationService->getDeposits($filters)->paginate(50);
+        $deposits = $this->reconciliationService->getDeposits($filters)->paginate(15);
 
         return view('reconciliation.deposits', compact('deposits', 'banks', 'filters'));
     }
@@ -86,7 +86,7 @@ class ReconciliationController extends Controller
             'max_amount' => $request->input('max_amount'),
         ];
 
-        $withdrawals = $this->reconciliationService->getWithdrawals($filters)->paginate(50);
+        $withdrawals = $this->reconciliationService->getWithdrawals($filters)->paginate(15);
 
         return view('reconciliation.withdrawals', compact('withdrawals', 'banks', 'filters'));
     }
@@ -107,7 +107,7 @@ class ReconciliationController extends Controller
             'max_amount' => $request->input('max_amount'),
         ];
 
-        $settlements = $this->reconciliationService->getSettlements($filters)->paginate(50);
+        $settlements = $this->reconciliationService->getSettlements($filters)->paginate(15);
 
         return view('reconciliation.settlements', compact('settlements', 'banks', 'filters'));
     }
@@ -137,7 +137,7 @@ class ReconciliationController extends Controller
             $query->where('date', '<=', $filters['end_date']);
         }
 
-        $closings = $query->orderBy('date', 'desc')->paginate(50);
+        $closings = $query->orderBy('date', 'desc')->paginate(15);
 
         return view('reconciliation.closings', compact('closings', 'banks', 'filters'));
     }

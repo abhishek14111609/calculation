@@ -30,7 +30,7 @@ class PassbookController extends Controller
         $banks = Bank::orderBy('name')->get();
         $passbookData = $this->passbookService->getPassbookData($filters);
 
-        $perPage = 50;
+        $perPage = 15;
         $currentPage = $request->input('page', 1);
         $transactions = collect($passbookData['transactions']);
 

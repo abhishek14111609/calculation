@@ -17,6 +17,8 @@ class Settlement extends Model
         'amount',
         'utr',
         'remark',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

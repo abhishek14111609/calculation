@@ -14,6 +14,8 @@ class BankClosing extends Model
         'date',
         'bank_id',
         'actual_closing',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

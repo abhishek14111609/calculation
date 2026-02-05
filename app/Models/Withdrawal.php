@@ -18,6 +18,8 @@ class Withdrawal extends Model
         'source_name',
         'status',
         'remark',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

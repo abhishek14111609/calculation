@@ -17,6 +17,8 @@ class Deposit extends Model
         'utr',
         'source_name',
         'remark',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

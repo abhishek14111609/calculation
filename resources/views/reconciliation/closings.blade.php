@@ -10,7 +10,7 @@
             </svg>
             Add/Update Closing Balance
         </h3>
-        <form method="POST" action="{{ route('reconciliation.closings.update') }}">
+        <form method="POST" action="{{ route('closings.store') }}">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
@@ -63,7 +63,8 @@
                         <option value="">All Banks</option>
                         @foreach($banks as $bank)
                             <option value="{{ $bank->id }}" {{ ($filters['bank_id'] ?? '') == $bank->id ? 'selected' : '' }}>
-                                {{ $bank->name }}</option>
+                                {{ $bank->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
