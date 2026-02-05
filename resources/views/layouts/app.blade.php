@@ -4,378 +4,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Bank Reconciliation System')</title>
+    <title>@yield('title', 'Bank Reconciliation')</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f5f7fa;
-            color: #2d3748;
-            line-height: 1.6;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+            min-height: 100vh;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
+        .glass-nav {
+            background: rgba(30, 27, 75, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
         }
 
-        /* Header */
-        .header {
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 1rem 0;
-            margin-bottom: 2rem;
+        .nav-pill {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .nav-pill:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
         }
 
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #1a202c;
+        .nav-pill.active {
+            background: rgba(99, 102, 241, 0.9);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
         }
 
-        .nav {
-            display: flex;
-            gap: 1rem;
+        .kpi-card {
+            transition: all 0.3s ease;
         }
 
-        .nav a {
-            padding: 0.5rem 1rem;
-            text-decoration: none;
-            color: #4a5568;
-            border-radius: 6px;
-            transition: all 0.2s;
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
 
-        .nav a:hover {
-            background: #edf2f7;
-            color: #2d3748;
+        .table-row {
+            transition: all 0.2s ease;
         }
 
-        .nav a.active {
-            background: #3182ce;
-            color: white;
+        .table-row:hover {
+            background: rgba(99, 102, 241, 0.03);
+            transform: scale(1.001);
         }
 
-        /* Alerts */
-        .alert {
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1.5rem;
-        }
-
-        .alert-success {
-            background: #c6f6d5;
-            color: #22543d;
-            border: 1px solid #9ae6b4;
-        }
-
-        .alert-error {
-            background: #fed7d7;
-            color: #742a2a;
-            border: 1px solid #fc8181;
-        }
-
-        /* Filter Panel */
-        .filter-panel {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
-        }
-
-        .filter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: #4a5568;
-        }
-
-        .form-group input,
-        .form-group select {
-            padding: 0.5rem;
-            border: 1px solid #cbd5e0;
-            border-radius: 6px;
-            font-size: 0.875rem;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #3182ce;
-            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background: #3182ce;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #2c5aa0;
-        }
-
-        .btn-secondary {
-            background: #718096;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #4a5568;
-        }
-
-        .btn-success {
-            background: #38a169;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #2f855a;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        /* Table */
-        .table-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead {
-            background: #f7fafc;
-        }
-
-        th {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #4a5568;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 0.875rem;
-        }
-
-        tr:hover {
-            background: #f7fafc;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .text-success {
-            color: #38a169;
-            font-weight: 500;
-        }
-
-        .text-danger {
-            color: #e53e3e;
-            font-weight: 500;
-        }
-
-        .text-warning {
-            color: #d69e2e;
-            font-weight: 500;
-        }
-
-        /* Pagination */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 1.5rem;
-        }
-
-        .pagination a,
-        .pagination span {
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            text-decoration: none;
-            color: #4a5568;
-        }
-
-        .pagination a:hover {
-            background: #edf2f7;
-        }
-
-        .pagination .active {
-            background: #3182ce;
-            color: white;
-            border-color: #3182ce;
-        }
-
-        /* Upload Section */
-        .upload-section {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
-        }
-
-        .upload-section h3 {
-            margin-bottom: 1rem;
-            font-size: 1.125rem;
-            font-weight: 600;
-        }
-
-        .file-input-wrapper {
-            display: flex;
-            gap: 1rem;
-            align-items: end;
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-card h4 {
-            font-size: 0.875rem;
-            color: #718096;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-card .value {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .filter-grid {
-                grid-template-columns: 1fr;
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
             }
 
-            .nav {
-                flex-direction: column;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
+        }
 
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
+        .animate-slide-down {
+            animation: slideDown 0.3s ease-out;
+        }
 
-            table {
-                font-size: 0.75rem;
-            }
+        .gradient-accent {
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+        }
 
-            th,
-            td {
-                padding: 0.5rem;
-            }
+        .gradient-green {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+
+        .gradient-red {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .gradient-amber {
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .gradient-blue {
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .currency {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
         }
     </style>
     @stack('styles')
 </head>
 
-<body>
-    <div class="header">
-        <div class="header-content">
-            <h1>Bank Reconciliation System</h1>
-            <nav class="nav">
-                <a href="{{ route('reconciliation.index') }}"
-                    class="{{ request()->routeIs('reconciliation.index') ? 'active' : '' }}">Dashboard</a>
-                <a href="{{ route('reconciliation.deposits') }}"
-                    class="{{ request()->routeIs('reconciliation.deposits*') ? 'active' : '' }}">Deposits</a>
-                <a href="{{ route('reconciliation.withdrawals') }}"
-                    class="{{ request()->routeIs('reconciliation.withdrawals*') ? 'active' : '' }}">Withdrawals</a>
-                <a href="{{ route('reconciliation.settlements') }}"
-                    class="{{ request()->routeIs('reconciliation.settlements*') ? 'active' : '' }}">Settlements</a>
-                <a href="{{ route('reconciliation.closings') }}"
-                    class="{{ request()->routeIs('reconciliation.closings*') ? 'active' : '' }}">Closings</a>
-            </nav>
+<body class="antialiased">
+    <nav class="glass-nav sticky top-0 z-[9999] border-b border-white/10">
+        <div class="max-w-[1600px] mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-white font-semibold text-lg">Reconciliation</h1>
+                        <p class="text-indigo-200 text-xs">Financial Control Center</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('reconciliation.index') }}"
+                        class="nav-pill {{ request()->routeIs('reconciliation.index') ? 'active' : '' }} px-4 py-2 rounded-lg text-sm font-medium text-white">Dashboard</a>
+                    <a href="{{ route('reconciliation.upload') }}"
+                        class="nav-pill {{ request()->routeIs('reconciliation.upload*') ? 'active' : '' }} px-4 py-2 rounded-lg text-sm font-medium text-white flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Upload
+                    </a>
+                    <a href="{{ route('reconciliation.deposits') }}"
+                        class="nav-pill {{ request()->routeIs('reconciliation.deposits*') ? 'active' : '' }} px-4 py-2 rounded-lg text-sm font-medium text-white">Deposits</a>
+                    <a href="{{ route('reconciliation.withdrawals') }}"
+                        class="nav-pill {{ request()->routeIs('reconciliation.withdrawals*') ? 'active' : '' }} px-4 py-2 rounded-lg text-sm font-medium text-white">Withdrawals</a>
+                    <a href="{{ route('reconciliation.settlements') }}"
+                        class="nav-pill {{ request()->routeIs('reconciliation.settlements*') ? 'active' : '' }} px-4 py-2 rounded-lg text-sm font-medium text-white">Settlements</a>
+                    <a href="{{ route('reconciliation.closings') }}"
+                        class="nav-pill {{ request()->routeIs('reconciliation.closings*') ? 'active' : '' }} px-4 py-2 rounded-lg text-sm font-medium text-white">Closings</a>
+                    <a href="{{ route('reconciliation.passbook') }}"
+                        class="nav-pill {{ request()->routeIs('reconciliation.passbook*') ? 'active' : '' }} px-4 py-2 rounded-lg text-sm font-medium text-white flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        Passbook
+                    </a>
+                </div>
+            </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="container">
+    <main class="max-w-[1600px] mx-auto px-6 py-8">
         @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
+            <div
+                class="animate-slide-down mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
+                <svg class="w-5 h-5 text-emerald-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-emerald-800 text-sm font-medium">{{ session('success') }}</p>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="alert alert-error">
-                {{ session('error') }}
+            <div class="animate-slide-down mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                <svg class="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-red-800 text-sm font-medium">{{ session('error') }}</p>
             </div>
         @endif
 
         @yield('content')
-    </div>
+    </main>
 
     @stack('scripts')
 </body>

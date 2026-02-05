@@ -143,9 +143,9 @@ class ReconciliationController extends Controller
     }
 
     /**
-     * Upload deposits
+     * Smart Upload - Centralized upload that auto-detects and routes data
      */
-    public function uploadDeposits(Request $request)
+    public function uploadSmart(Request $request)
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:10240',
@@ -154,11 +154,16 @@ class ReconciliationController extends Controller
         try {
             DB::beginTransaction();
 
-            Excel::import(new DepositsImport, $request->file('file'));
+            $import = new \App\Imports\SmartReconciliationImport();
+            Excel::import($import, $request->file('file'));
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Deposits uploaded successfully');
+            $report = $import->getReport();
+
+            return redirect()->route('reconciliation.upload.report')
+                ->with('upload_report', $report);
+
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Upload failed: ' . $e->getMessage());
@@ -166,49 +171,25 @@ class ReconciliationController extends Controller
     }
 
     /**
-     * Upload withdrawals
+     * Show upload page
      */
-    public function uploadWithdrawals(Request $request)
+    public function showUpload()
     {
-        $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            Excel::import(new WithdrawalsImport, $request->file('file'));
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Withdrawals uploaded successfully');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Upload failed: ' . $e->getMessage());
-        }
+        return view('reconciliation.upload');
     }
 
     /**
-     * Upload settlements
+     * Show upload report
      */
-    public function uploadSettlements(Request $request)
+    public function showUploadReport()
     {
-        $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
-        ]);
+        $report = session('upload_report');
 
-        try {
-            DB::beginTransaction();
-
-            Excel::import(new SettlementsImport, $request->file('file'));
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Settlements uploaded successfully');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Upload failed: ' . $e->getMessage());
+        if (!$report) {
+            return redirect()->route('reconciliation.upload');
         }
+
+        return view('reconciliation.upload', compact('report'));
     }
 
     /**
@@ -349,5 +330,21 @@ class ReconciliationController extends Controller
     public function downloadSampleSettlements()
     {
         return Excel::download(new \App\Exports\SettlementsSampleExport, 'sample_settlements.xlsx');
+    }
+
+    /**
+     * Download smart upload sample template (all-in-one)
+     */
+    public function downloadSmartSample()
+    {
+        return Excel::download(new \App\Exports\SmartUploadSampleExport, 'smart_upload_sample.xlsx');
+    }
+
+    /**
+     * Download comprehensive sample with 90 rows of realistic data
+     */
+    public function downloadComprehensiveSample()
+    {
+        return Excel::download(new \App\Exports\ComprehensiveSampleExport, 'comprehensive_sample_90_rows.xlsx');
     }
 }
