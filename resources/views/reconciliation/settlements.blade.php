@@ -27,7 +27,8 @@
                         <option value="">All Banks</option>
                         @foreach($banks as $bank)
                             <option value="{{ $bank->id }}" {{ ($filters['from_bank_id'] ?? '') == $bank->id ? 'selected' : '' }}>
-                                {{ $bank->name }}</option>
+                                {{ $bank->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -39,7 +40,8 @@
                         <option value="">All Banks</option>
                         @foreach($banks as $bank)
                             <option value="{{ $bank->id }}" {{ ($filters['to_bank_id'] ?? '') == $bank->id ? 'selected' : '' }}>
-                                {{ $bank->name }}</option>
+                                {{ $bank->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>

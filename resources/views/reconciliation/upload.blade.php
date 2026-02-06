@@ -39,6 +39,17 @@
                     </a>
                 </div>
 
+                @if ($errors->any())
+                    <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl relative">
+                        <strong class="font-bold">Upload Error!</strong>
+                        <ul class="mt-2 list-disc list-inside text-sm">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('reconciliation.upload.process') }}" enctype="multipart/form-data">
                     @csrf
                     <div class="mb-6">

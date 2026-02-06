@@ -148,7 +148,7 @@ class ReconciliationController extends Controller
     public function uploadSmart(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
+            'file' => 'required|file|max:10240',
         ]);
 
         try {

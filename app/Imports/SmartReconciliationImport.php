@@ -55,11 +55,24 @@ class SmartReconciliationImport implements ToCollection, WithHeadingRow, SkipsEm
 
     private function processRow(array $row, int $rowNumber)
     {
-        $rowType = strtolower(trim((string)($row['row_type'] ?? '')));
+        $rowType = strtolower(trim((string) ($row['row_type'] ?? '')));
+
+        // Auto-detection logic if row_type is missing
+        if (empty($rowType)) {
+            if (!empty($row['from_bank']) && !empty($row['to_bank'])) {
+                $rowType = 'settlement';
+            } elseif (isset($row['actual_closing']) && $row['actual_closing'] !== '') {
+                $rowType = 'closing';
+            } elseif (!empty($row['status'])) {
+                $rowType = 'withdrawal';
+            } elseif (!empty($row['bank_name']) && !empty($row['amount'])) {
+                $rowType = 'deposit';
+            }
+        }
 
         if (empty($rowType)) {
             $this->report['failed_rows']++;
-            $this->report['errors'][] = "Row {$rowNumber}: row_type is required";
+            $this->report['errors'][] = "Row {$rowNumber}: Could not detect row type. Please specify 'row_type' or ensure required columns are present.";
             return;
         }
 
@@ -89,7 +102,7 @@ class SmartReconciliationImport implements ToCollection, WithHeadingRow, SkipsEm
     {
         $normalized = [];
         foreach ($row as $key => $value) {
-            $normalizedKey = strtolower(trim((string)$key));
+            $normalizedKey = strtolower(trim((string) $key));
             $normalized[$normalizedKey] = is_string($value) ? trim($value) : $value;
         }
         return $normalized;
