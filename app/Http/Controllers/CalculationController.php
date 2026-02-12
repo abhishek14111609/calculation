@@ -19,6 +19,16 @@ use App\Exports\MasterLogExport;
 
 class CalculationController extends Controller
 {
+    public function __construct()
+    {
+        // Fix for open_basedir restriction and temp path issues
+        $tempPath = storage_path('framework/cache/laravel-excel');
+        if (!file_exists($tempPath)) {
+            @mkdir($tempPath, 0775, true);
+        }
+        config(['excel.temporary_files.local_path' => $tempPath]);
+    }
+
     public function index(Request $request)
     {
         $ledger = LedgerQuery::fromRequest($request);
@@ -186,6 +196,9 @@ class CalculationController extends Controller
 
         $file = $request->file('customer_file');
 
+        // Fix for open_basedir restriction and temp path issues
+        // Managed in __construct to apply globally
+
         $rows = Excel::toCollection(new CustomersImport, $file)->first() ?? collect();
 
         $imported = 0;
@@ -270,6 +283,9 @@ class CalculationController extends Controller
         ]);
 
         $file = $request->file('transaction_file');
+
+        // Fix for open_basedir restriction and temp path issues
+        // Managed in __construct to apply globally
 
         $rows = Excel::toCollection(new TransactionsImport, $file)->first() ?? collect();
 
