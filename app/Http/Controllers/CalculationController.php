@@ -19,16 +19,6 @@ use App\Exports\MasterLogExport;
 
 class CalculationController extends Controller
 {
-    public function __construct()
-    {
-        // Fix for open_basedir restriction and temp path issues
-        $tempPath = storage_path('framework/cache/laravel-excel');
-        if (!file_exists($tempPath)) {
-            @mkdir($tempPath, 0775, true);
-        }
-        config(['excel.temporary_files.local_path' => $tempPath]);
-    }
-
     public function index(Request $request)
     {
         $ledger = LedgerQuery::fromRequest($request);
